@@ -1,0 +1,11 @@
+### GET request to example server with no parameters - port 5551
+GET http://localhost:5551
+
+### GET request to example server with query parameters - port 5551
+GET http://localhost:5551/api/v1/
+
+### GET request to example server with path and query parameters - API Public
+GET http://localhost:5551/api/v1/public
+
+### GET request to example server with path and query parameters - API Private
+GET http://localhost:5551/api/v1/privates

@@ -1,0 +1,1 @@
+GET http://localhost:5551/api/v1/public/web-settings/get

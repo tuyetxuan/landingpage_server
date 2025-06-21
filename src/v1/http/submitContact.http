@@ -1,0 +1,11 @@
+POST http://localhost:5551/api/v1/public/contact/submit
+Content-Type: application/json
+
+{
+  "name": "Nguyễn Văn A",
+  "email": "vuonggiaphu.pct@gmail.com",
+  "phone": "0377985402",
+  "message": "This is a test message.",
+  "address": "Test Subject",
+  "service": 1222
+}

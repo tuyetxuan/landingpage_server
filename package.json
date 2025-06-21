@@ -1,0 +1,63 @@
+{
+  "name": "landingpage_server",
+  "version": "1.0",
+  "type": "module",
+  "main": "./bin/www.js",
+  "scripts": {
+    "start": "nodemon bin/www.js",
+    "dev": "nodemon bin/www.js",
+    "install-all": "npm install"
+  },
+  "imports": {
+    "#app/*": "./*",
+    "#src/*": "./src/v1/*",
+    "#config/*": "./src/v1/config/*",
+    "#db/*": "./src/v1/db/*",
+    "#docs/*": "./src/v1/docs/*",
+    "#libs/*": "./src/v1/libs/*",
+    "#models/*": "./src/v1/models/*",
+    "#routes/*": "./src/v1/routes/*",
+    "#controllers/*": "./src/v1/controllers/*",
+    "#middlewares/*": "./src/v1/middlewares/*",
+    "#utils/*": "./src/v1/utils/*",
+    "#configs/*": "./src/v1/configs/*",
+    "#services/*": "./src/v1/services/*",
+    "#validations/*": "./src/v1/validations/*",
+    "#constants/*": "./src/v1/constants/*",
+    "#core/*": "./src/v1/core/*",
+    "#helpers/*": "./src/v1/helpers/*"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^5.1.1",
+    "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "debug": "^4.4.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "geoip-lite": "^1.4.10",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.2",
+    "mysql2": "^3.14.1",
+    "nodemailer": "^7.0.2",
+    "sequelize": "^6.37.7",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "babel-register": "^6.26.0",
+    "nodemon": "^3.1.10",
+    "sequelize-cli": "^6.6.3"
+  }
+}

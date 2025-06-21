@@ -1,0 +1,75 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "#/*": [
+        "/*"
+      ],
+      "#src/*": [
+        "src/v1/*"
+      ],
+      "#libs/*": [
+        "src/v1/libs/*"
+      ],
+      "#routes/*": [
+        "src/v1/routes/*"
+      ],
+      "#models/*": [
+        "src/v1/models/*"
+      ],
+      "#app/*": [
+        "src/v1/app/*"
+      ],
+      "#config/*": [
+        "src/v1/config/*"
+      ],
+      "#db/*": [
+        "src/v1/db/*"
+      ],
+      "#docs/*": [
+        "src/v1/docs/*"
+      ],
+      "#controllers/*": [
+        "src/v1/controllers/*"
+      ],
+      "#middlewares/*": [
+        "src/v1/middlewares/*"
+      ],
+      "#utils/*": [
+        "src/v1/utils/*"
+      ],
+      "#configs/*": [
+        "src/v1/configs/*"
+      ],
+      "#services/*": [
+        "src/v1/services/*"
+      ],
+      "#validations/*": [
+        "src/v1/validations/*"
+      ],
+      "#constants/*": [
+        "src/v1/constants/*"
+      ],
+      "#core/*": [
+        "src/v1/core/*"
+      ],
+      "#helpers/*": [
+        "src/v1/helpers/*"
+      ]
+    },
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

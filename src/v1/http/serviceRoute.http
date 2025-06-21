@@ -1,0 +1,4 @@
+GET http://localhost:5551/api/v1/public/service/get-all
+
+###
+GET http://localhost:5551/api/v1/public/service/get-by-id-category/2

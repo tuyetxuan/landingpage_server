@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "last_updated": "2023-10-01",
+  "description": "Dịch vụ thiết kế landing page chuyên nghiệp tại CCO Media",
+  "website_name": "CCO MEDIA",
+  "website_url": "https://cco.media",
+  "logo": "https://cco.media/logo.png",
+  "title": "DỊCH VỤ THIẾT KẾ WEB LANDING PAGE CHUYÊN NGHIỆP",
+  "contact_info": {
+    "email": "info@cco.media",
+    "address": "154 Phạm Văn Chiêu, Phường 9, Gò Vấp",
+    "hotline": [
+      "+84 123 456 789",
+      "+84 987 654 321",
+      "+84 321 654 987"
+    ],
+    "social_links": {
+      "facebook": "https://facebook.com/ccomedia",
+      "twitter": "https://twitter.com/ccomedia",
+      "linkedin": "https://linkedin.com/company/ccomedia",
+      "instagram": "https://instagram.com/ccomedia",
+      "youtube": "https://youtube.com/c/ccomedia"
+    }
+  },
+  "theme": {
+    "primary_color": "#007BFF",
+    "secondary_color": "#6C757D"
+  }
+}

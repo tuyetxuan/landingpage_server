@@ -1,0 +1,4 @@
+GET http://localhost:5551/api/v1/public/article/get-all
+
+###
+GET http://localhost:5551/api/v1/public/article/get-by-id/xu-huong-thiet-ke-giao-dien-2025
