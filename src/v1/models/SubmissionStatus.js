@@ -8,6 +8,11 @@ export default (sequelize, DataTypes) => {
 		status: {
 			type: DataTypes.ENUM('pending', 'in_progress', 'completed', 'rejected'),
 			defaultValue: 'pending',
+			allowNull: false,
+		},
+		name: {
+			type: DataTypes.STRING(255),
+			allowNull: false,
 		},
 		notes: {
 			type: DataTypes.TEXT,

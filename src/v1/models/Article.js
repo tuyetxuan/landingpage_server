@@ -29,15 +29,11 @@ export default (sequelize, DataTypes) => {
 			type: DataTypes.BIGINT.UNSIGNED,
 			allowNull: true,
 		},
-		is_published: {
-			type: DataTypes.BOOLEAN,
-			defaultValue: false,
-		},
 		published_at: {
 			type: DataTypes.DATE,
 			allowNull: true,
 		},
-		clock: {
+		lock: {
 			type: DataTypes.BOOLEAN,
 			defaultValue: false,
 		},
@@ -67,16 +63,7 @@ export default (sequelize, DataTypes) => {
 				type: 'FULLTEXT',
 			},
 		],
-		validate: {
-			validPublication() {
-				if (this.is_published && !this.published_at) {
-					throw new Error('Published articles must have a published_at date');
-				}
-				if (!this.is_published && this.published_at) {
-					throw new Error('Non-published articles cannot have a published_at date');
-				}
-			}
-		},
+		
 	});
 	
 	Article.associate = (models) => {

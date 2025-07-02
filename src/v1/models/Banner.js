@@ -24,14 +24,6 @@ export default (sequelize, DataTypes) => {
 			type: DataTypes.BOOLEAN,
 			defaultValue: true,
 		},
-		start_date: {
-			type: DataTypes.DATE,
-			allowNull: true,
-		},
-		end_date: {
-			type: DataTypes.DATE,
-			allowNull: true,
-		},
 		created_at: {
 			type: DataTypes.DATE,
 			defaultValue: DataTypes.NOW,

@@ -1,0 +1,13 @@
+POST http://localhost:5551/api/v1/public/auth/sign-in
+Content-Type: application/json
+
+{
+  "email": "nguyenvanphu.hufi@gmail.com",
+  "password": "123456Password@123456"
+}
+
+###
+GET http://localhost:5551/api/v1/private/user/get-by-id
+Content-Type: application/json
+client_id: 1
+authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJuZ3V5ZW52YW5waHUuaHVmaUBnbWFpbC5jb20iLCJmaXJzdF9uYW1lIjoiTmd1eeG7hW4iLCJsYXN0X25hbWUiOiJWxINuIEFuIiwicm9sZSI6ImFkbWluIiwianRpIjoiMWY3MWY3NGJmMmU0M2Q3MjMxMzQzNmZjYTMxODczNDg1NGNhNDZhM2VjMTVkNjU2YzdjZWQ4NmRmZmQyYzA1YyIsImlhdCI6MTc1MDg5MjI0MCwiZXhwIjoxNzUwODkyMzAwfQ.qjdN8ypocNSaWkU8YJJnpiWRfImBYXzVmeQHGU9oOe4

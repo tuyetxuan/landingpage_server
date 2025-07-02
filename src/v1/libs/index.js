@@ -18,3 +18,4 @@ export {default as cookieParser} from 'cookie-parser';
 export {default as session} from 'express-session';
 export {default as http} from 'http';
 export {default as debug} from 'debug';
+export {default as cloudinary} from 'cloudinary';

@@ -41,11 +41,11 @@ export default (sequelize, DataTypes) => {
 		},
 		public_key: {
 			type: DataTypes.STRING(1024),
-			allowNull: false,
+			allowNull: true,
 		},
 		access_key: {
 			type: DataTypes.STRING(1024),
-			allowNull: false,
+			allowNull: true,
 		},
 		role: {
 			type: DataTypes.ENUM('admin', 'editor'),

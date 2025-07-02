@@ -14,5 +14,6 @@ router.use("/service", (await import('./serviceRoute.js')).default);
 router.use("/article", (await import('./articleRoute.js')).default);
 router.use("/article-category", (await import('./articleCategoryRoute.js')).default);
 router.use("/contact", (await import('./submitContactRoute.js')).default);
+router.use("/auth", (await import('./authRoute.js')).default);
 
 export default router;
