@@ -7,5 +7,6 @@ env.config();
 const router = ex.Router();
 
 router.post("/sign-in", asyncHandler(__auth__.signIn));
+router.post("/refresh-token", asyncHandler(__auth__.handlerRefreshToken));
 
 export default router;

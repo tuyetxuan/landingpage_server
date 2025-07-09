@@ -53,6 +53,13 @@ const signIn = async (req) => {
 			});
 		}
 		
+		if (user?.is_active === false) {
+			throw new BAD_REQUEST({
+				message: "Tài khoản của bạn đã bị khóa (Vui lòng liên hệ Admin để mở khóa) - Your account has been locked",
+				request: req,
+			});
+		}
+		
 		const isPasswordValid = await bcrypt.compare(
 			password,
 			user.password_hash

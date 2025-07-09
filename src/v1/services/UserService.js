@@ -4,6 +4,7 @@ import db from "#models/index.js";
 import cloudinaryConfig from "#configs/cloudinary.js";
 import {removeVietnameseTones} from "#utils/removeVietnameseTones.js";
 import bcrypt from "bcrypt";
+import {getInfoUser} from "#middlewares/authUtils.js";
 
 
 const {OK, CREATED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND} = __RESPONSE__;
@@ -44,7 +45,10 @@ const getUserById = async (req) => {
 		}
 		
 		return {
-			user: user,
+			user: getInfoUser({
+				fields: ['id', 'username', 'email', 'role', 'profile_image', 'first_name', 'last_name', 'gender', 'is_active', 'created_at'],
+				object: user,
+			}),
 		};
 	} catch (error) {
 		throw error;
@@ -217,7 +221,10 @@ const updateUser = async (req) => {
 		}
 		
 		return {
-			user: user,
+			user: getInfoUser({
+				fields: ['id', 'username', 'email', 'role', 'profile_image', 'first_name', 'last_name', 'gender', 'is_active', 'created_at'],
+				object: user,
+			}),
 		}
 		
 	} catch (error) {
@@ -309,18 +316,27 @@ const createUser = async (req) => {
 			});
 		}
 		
-		const hashedPassword = await bcrypt.hash("Pass@123456", 10);
+		const hashedPassword = await bcrypt.hash('Pass@123456', 10);
 		
-		const user = await db.User.create({
-			username: `USER_${(new Date().getFullYear() % 100).toString().padStart(2, '0')}_${new Date().getTime()}__${removeVietnameseTones(last_name).toUpperCase()}`.toLowerCase(),
-			email,
-			password_hash: hashedPassword,
-			first_name,
-			last_name,
-			gender: gender || "khac",
-			role: role || "editor",
-			profile_image: null,
-			is_active: is_active !== undefined ? is_active : true,
+		const user = await db.sequelize.transaction(async (t) => {
+			const newUser = await db.User.create({
+				email,
+				password_hash: hashedPassword,
+				first_name,
+				last_name,
+				gender: gender || 'khac',
+				role: role || 'editor',
+				profile_image: null,
+				is_active: is_active !== undefined ? is_active : true,
+				username: new Date().getTime().toString() + Math.floor(Math.random() * 1000),
+			}, {transaction: t});
+			
+			const yearSuffix = new Date().getFullYear().toString().slice(-2);
+			const username = `${removeVietnameseTones(first_name || 'user')}${removeVietnameseTones(last_name || '')}${yearSuffix}${newUser.id}`.toLowerCase();
+			
+			await newUser.update({username}, {transaction: t});
+			
+			return newUser;
 		});
 		
 		if (!user) {
@@ -331,7 +347,10 @@ const createUser = async (req) => {
 		}
 		
 		return {
-			user: user,
+			user: getInfoUser({
+				fields: ['id', 'username', 'email', 'role', 'profile_image', 'first_name', 'last_name', 'gender', 'is_active', 'created_at'],
+				object: user,
+			}),
 		};
 	} catch (error) {
 		if (error instanceof BAD_REQUEST || error instanceof UNAUTHORIZED) {
@@ -417,7 +436,10 @@ const updateUserRole = async (req) => {
 		});
 		
 		return {
-			user: user
+			user: getInfoUser({
+				fields: ['id', 'username', 'email', 'role', 'profile_image', 'first_name', 'last_name', 'gender', 'is_active', 'created_at'],
+				object: user,
+			}),
 		};
 		
 	} catch (error) {
@@ -555,6 +577,7 @@ const resetPassword = async (req) => {
 		const admin = await db.User.findByPk(adminId, {
 			attributes: ['id', 'role'],
 		});
+		
 		if (!admin || admin.role !== 'admin') {
 			throw new UNAUTHORIZED({
 				message: 'Only admins can reset user passwords',
@@ -563,7 +586,7 @@ const resetPassword = async (req) => {
 		}
 		
 		const user = await db.User.findByPk(userId, {
-			attributes: ['id', 'password_hash', 'username'],
+			attributes: ['id', 'password_hash', 'username', 'email'],
 		});
 		
 		if (!user) {
@@ -757,6 +780,57 @@ const logout = async (req) => {
 	}
 }
 
+const report = async (req) => {
+	try {
+		if (!req || typeof req !== 'object') {
+			throw new BAD_REQUEST({
+					message: 'Invalid request object',
+					request: req,
+				}
+			);
+		}
+		
+		const userCountByRole = await db.User.findAll({
+			attributes: [
+				[db.sequelize.col('role'), 'roleName'],
+				[db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count'],
+			],
+			where: {
+				role: ['admin', 'editor'],
+			},
+			group: ['role'],
+			raw: true,
+		});
+		
+		const totalUsers = await db.User.count();
+		const totalArticles = await db.Article.count();
+		const totalContact = await db.ContactSubmission.count();
+		const totalService = await db.Service.count();
+		if (!userCountByRole || userCountByRole.length === 0) {
+			return {
+				userCountByRole: [],
+				totalUsers: 0,
+				totalArticles: 0,
+				totalContact: 0,
+				totalService: 0,
+			}
+		}
+		
+		return {
+			userCountByRole: userCountByRole,
+			totalUsers: totalUsers,
+			totalArticles: totalArticles,
+			totalContact: totalContact,
+			totalService: totalService,
+		}
+	} catch (error) {
+		if (error instanceof BAD_REQUEST) {
+			throw error;
+		}
+		throw error;
+	}
+}
+
 export {
 	getUserById,
 	getAllUsers,
@@ -766,5 +840,6 @@ export {
 	changePassword,
 	updateUserStatus,
 	updateUserRole,
-	logout
+	logout,
+	report
 };

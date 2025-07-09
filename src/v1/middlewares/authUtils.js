@@ -9,7 +9,7 @@ import db from "#models/index.js";
 const {OK, CREATED, NO_CONTENT, BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, FORBIDDEN, REFRESH_TOKEN} = __RESPONSE__;
 
 
-const EXPIRES_IN_ACCESS_TOKEN = "2d";
+const EXPIRES_IN_ACCESS_TOKEN = "15m";
 const EXPIRES_IN_REFRESH_TOKEN = "30d";
 
 const getInfoUser = ({fields, object}) => {
@@ -37,83 +37,88 @@ const createTokenPair = async (payload, publicKey, privateKey) => {
 };
 
 const authentication = asyncHandler(async (req, res, next) => {
-	if (!req.headers || Object.keys(req.headers).length === 0) {
-		throw new UNAUTHORIZED({
-			message: "Không tìm thấy headers - Headers not found",
-			suggestion: "Please check again your request",
-			request: req,
-		});
-	}
-	
-	console.log(req.headers);
-	
-	if (!req.headers.client_id || !req.headers.authorization) {
-		throw new UNAUTHORIZED({
-			message: "Tham số client_id và authorization là bắt buộc - client_id and authorization are required",
-			suggestion: "Please check again your request",
-			request: req,
-		});
-	}
-	
-	const client_id = req.headers.client_id;
-	if (!client_id) {
-		throw new UNAUTHORIZED({
-			message: "Client id is required",
-			suggestion: "Please check again your request",
-			request: req,
-		});
-	}
-	
-	const keyStore = await db.User.findOne({
-		where: {
-			id: client_id,
-		},
-		attributes: ["access_key", "public_key", "id"],
-	});
-	
-	if (!keyStore) {
-		throw new UNAUTHORIZED({
-			message: "Không tìm thấy người dùng trong Token - User not found in Token",
-			suggestion: "Please check again your request",
-			request: req,
-		});
-	}
-	const accessToken = req.headers.authorization;
-	if (!accessToken) {
-		throw new UNAUTHORIZED({
-			message: "Access token is required",
-			suggestion: "Please check again your request",
-			request: req,
-		});
-	}
-	
-	jwt.verify(accessToken, keyStore.public_key, (error, decoded) => {
-		if (error) {
-			if (error instanceof jwt.TokenExpiredError) {
-				throw new REFRESH_TOKEN({
-					message: "Access token hết hạn - Access token expired",
-					suggestion: "Please check again your request",
-					request: req,
-				});
-			}
-			if (error instanceof jwt.JsonWebTokenError) {
-				throw new UNAUTHORIZED({
-					message: "Access token giải mã không hợp lệ - Access token is invalid" + error.message,
-					suggestion: "Please check again your request",
-					request: req,
-				});
-			}
-		}
-		if (decoded.id != client_id) {
+	try {
+		if (!req.headers || Object.keys(req.headers).length === 0) {
 			throw new UNAUTHORIZED({
-				message: "User không hợp lệ với token - User is invalid with token - client_id # userId",
+				message: "Không tìm thấy headers - Headers not found",
 				suggestion: "Please check again your request",
 				request: req,
 			});
 		}
-		req.keyStore = keyStore;
-		return next();
-	});
+		
+		if (!req.headers.client_id || !req.headers.authorization) {
+			throw new UNAUTHORIZED({
+				message: "Tham số client_id và authorization là bắt buộc - client_id and authorization are required",
+				suggestion: "Please check again your request",
+				request: req,
+			});
+		}
+		
+		const client_id = req.headers.client_id;
+		if (!client_id) {
+			throw new UNAUTHORIZED({
+				message: "Client id is required",
+				suggestion: "Please check again your request",
+				request: req,
+			});
+		}
+		
+		const keyStore = await db.User.findOne({
+			where: {
+				id: client_id,
+			},
+			attributes: ["access_key", "public_key", "id"],
+		});
+		
+		if (!keyStore) {
+			throw new UNAUTHORIZED({
+				message: "Không tìm thấy người dùng trong Token - User not found in Token",
+				suggestion: "Please check again your request",
+				request: req,
+			});
+		}
+		const accessToken = req.headers.authorization;
+		if (!accessToken) {
+			throw new UNAUTHORIZED({
+				message: "Access token is required",
+				suggestion: "Please check again your request",
+				request: req,
+			});
+		}
+		
+		jwt.verify(accessToken, keyStore.public_key, (error, decoded) => {
+			if (error) {
+				if (error instanceof jwt.TokenExpiredError) {
+					throw new REFRESH_TOKEN({
+						message: "Access token hết hạn - Access token expired",
+						suggestion: "Please check again your request",
+						request: req,
+					});
+				}
+				if (error instanceof jwt.JsonWebTokenError) {
+					throw new UNAUTHORIZED({
+						message: "Access token giải mã không hợp lệ - Access token is invalid" + error.message,
+						suggestion: "Please check again your request",
+						request: req,
+					});
+				}
+			}
+			if (decoded.id != client_id) {
+				throw new UNAUTHORIZED({
+					message: "User không hợp lệ với token - User is invalid with token - client_id # userId",
+					suggestion: "Please check again your request",
+					request: req,
+				});
+			}
+			req.keyStore = keyStore;
+			return next();
+		});
+	} catch (error) {
+		if (error instanceof BAD_REQUEST || error instanceof FORBIDDEN || error instanceof UNAUTHORIZED || error instanceof REFRESH_TOKEN) {
+			throw error;
+		}
+		throw error;
+	}
 });
 
 const restrictTo = (allowedRoles) => {
@@ -127,7 +132,7 @@ const restrictTo = (allowedRoles) => {
 			}
 			const user = await db.User.findOne({
 				where: {id: req.keyStore.id},
-				attributes: ["id", "role"],
+				attributes: ["id", "role", 'is_active'],
 			});
 			
 			if (!user) {
@@ -136,13 +141,20 @@ const restrictTo = (allowedRoles) => {
 				});
 			}
 			
-			if (!allowedRoles.includes(user.role)) {
+			if (!allowedRoles.includes(user?.role)) {
 				throw new FORBIDDEN({
 					message: "Không có quyền truy cập - Access denied",
+					request: req,
 				});
 			}
 			
-			req.user = user;
+			if (user?.is_active === false) {
+				throw new FORBIDDEN({
+					message: "Tài khoản của bạn đã bị khóa (Vui lòng liên hệ Admin để mở khóa) - Your account has been locked",
+					request: req,
+				});
+			}
+			
 			next();
 		} catch (error) {
 			if (error instanceof BAD_REQUEST || error instanceof FORBIDDEN) {
@@ -155,35 +167,38 @@ const restrictTo = (allowedRoles) => {
 
 const handlerRefreshToken = async (req, res) => {
 	try {
-		if (!req || typeof req !== "object" || !req.body) {
-			throw new BAD_REQUEST({
+		if (!req || typeof req !== "object") {
+			throw new UNAUTHORIZED({
 				message: "Yêu cầu không hợp lệ - Invalid request object",
 				suggestion: "Vui lòng kiểm tra yêu cầu của bạn",
+				request: req
 			});
 		}
 		
-		const {refreshToken, idUser} = req.body;
-		if (!refreshToken || !idUser) {
-			throw new BAD_REQUEST({
+		const {refresh_token, client_id} = req.body;
+		if (!refresh_token || !client_id) {
+			throw new UNAUTHORIZED({
 				message: "Thiếu refreshToken hoặc idUser - Missing refreshToken or idUser",
 				suggestion: "Vui lòng cung cấp đầy đủ thông tin",
+				request: req
 			});
 		}
 		
 		const user = await db.User.findOne({
-			where: {id: idUser},
+			where: {id: client_id},
 		});
+		
 		if (!user) {
 			throw new UNAUTHORIZED({
 				message: "Người dùng không tồn tại - User not found",
 				suggestion: "Vui lòng kiểm tra idUser",
+				request: req
 			});
 		}
 		
-		// Verify refresh token
 		let decoded;
 		try {
-			decoded = verifyToken(refreshToken, user.access_key);
+			decoded = verifyToken(refresh_token, user.access_key);
 		} catch (error) {
 			throw new UNAUTHORIZED({
 				message: "Token không hợp lệ - Invalid refresh token",
@@ -191,49 +206,32 @@ const handlerRefreshToken = async (req, res) => {
 			});
 		}
 		
-		if (!decoded || decoded.id !== idUser) {
+		if (!decoded || decoded.id !== user?.id) {
 			throw new UNAUTHORIZED({
 				message: "Token không hợp lệ hoặc không khớp với người dùng - Token mismatch",
 				suggestion: "Vui lòng đăng nhập lại",
 			});
 		}
 		
-		const tokens = await createTokenPair(
-			{
-				id: user.id,
-				email: user.email,
-				phone: user.phone,
-				first_name: user.first_name,
-				last_name: user.last_name,
-				role: user.role,
-			},
-			user.public_key,
-			user.access_key
-		);
+		const accessToken = jwt.sign({
+			id: user.id,
+			email: user.email,
+			phone: user.phone,
+			first_name: user.first_name,
+			last_name: user.last_name,
+			role: user.role,
+		}, user.public_key, {expiresIn: EXPIRES_IN_ACCESS_TOKEN});
 		
 		return {
-			user: getInfoUser({
-				fields: [
-					"id",
-					"email",
-					"first_name",
-					"last_name",
-					"profile_image",
-					"role",
-				],
-				object: user,
-			}),
-			tokens,
+			token_type: "Bearer",
+			access_token: accessToken,
+			expires_in: EXPIRES_IN_ACCESS_TOKEN,
 		};
 	} catch (error) {
 		if (error instanceof BAD_REQUEST || error instanceof UNAUTHORIZED) {
 			throw error;
 		}
-		throw new BAD_REQUEST({
-			message: "Lỗi hệ thống - System error",
-			suggestion: "Vui lòng thử lại sau",
-			error: error.message,
-		});
+		throw error;
 	}
 };
 

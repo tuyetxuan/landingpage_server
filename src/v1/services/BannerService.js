@@ -221,6 +221,7 @@ const updateBanner = async (req) => {
 						folder: `banners/${new Date(banner.created_at).getFullYear()}`,
 						public_id: publicId,
 						overwrite: true,
+						allowed_formats: ["jpg", "jpeg", "png", "gif", "svg"],
 					},
 					(error, result) => {
 						if (error) {
@@ -329,9 +330,46 @@ const deleteBanner = async (req) => {
 	}
 };
 
+const getAll = async (req) => {
+	try {
+		if (!req || typeof req !== 'object') {
+			throw new BAD_REQUEST({
+					message: 'Invalid request object',
+					request: req,
+				}
+			);
+		}
+		const banners = await db.Banner.findAll({
+			where: {
+				is_active: true,
+			},
+			attributes: ['title', 'image_url', 'description', 'is_active', 'created_at'],
+			order: [
+				['created_at', 'DESC'],
+			],
+		});
+		if (!banners || banners.length === 0) {
+			return {
+				banners: [],
+				length: 0,
+			};
+		}
+		return {
+			banners: banners,
+			length: banners.length,
+		};
+	} catch (error) {
+		if (error instanceof BAD_REQUEST || error instanceof NOT_FOUND) {
+			throw error;
+		}
+		throw error;
+	}
+}
+
 export {
 	createBanner,
 	getAllBanners,
 	updateBanner,
-	deleteBanner
+	deleteBanner,
+	getAll
 };

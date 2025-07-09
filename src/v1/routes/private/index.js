@@ -16,6 +16,6 @@ router.use("/article", (await import('./articleRoute.js')).default);
 router.use("/categoryArticle", (await import('./articleCategoryRoute.js')).default);
 router.use("/contact", (await import('./submitContactRoute.js')).default);
 router.use("/submission_status", (await import('./submissionStatusRoute.js')).default);
-
+router.use("/report", (await import('./userRoute.js')).default);
 
 export default router;

@@ -197,9 +197,8 @@ const updateContact = async (req) => {
 			});
 		}
 		
-		const {id, service_category_id, name, phone, email, address, notes, message, status_id} = req.body;
+		const {id, notes, status_id} = req.body;
 		
-		// Validate id
 		if (!id || isNaN(id) || id <= 0) {
 			throw new BAD_REQUEST({
 				message: "Contact ID is missing or invalid",
@@ -207,47 +206,7 @@ const updateContact = async (req) => {
 			});
 		}
 		
-		// Validate service_category_id
-		if (service_category_id && (isNaN(service_category_id) || service_category_id <= 0)) {
-			throw new BAD_REQUEST({
-				message: "Service category ID must be a positive integer",
-				request: req,
-			});
-		}
 		
-		// Validate name
-		if (name && (typeof name !== "string" || name.trim() === "")) {
-			throw new BAD_REQUEST({
-				message: "Name field is invalid",
-				request: req,
-			});
-		}
-		
-		// Validate phone
-		if (phone && (typeof phone !== "string" || !/^\+?\d{9,15}$/.test(phone))) {
-			throw new BAD_REQUEST({
-				message: "Phone number is invalid",
-				request: req,
-			});
-		}
-		
-		// Validate email
-		if (email && (typeof email !== "string" || !/^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,10}$/.test(email))) {
-			throw new BAD_REQUEST({
-				message: "Email is invalid",
-				request: req,
-			});
-		}
-		
-		// Validate address
-		if (address && (typeof address !== "string" || address.trim() === "")) {
-			throw new BAD_REQUEST({
-				message: "Address field is invalid",
-				request: req,
-			});
-		}
-		
-		// Validate notes
 		if (notes && (typeof notes !== "string")) {
 			throw new BAD_REQUEST({
 				message: "Notes field is invalid",
@@ -255,15 +214,6 @@ const updateContact = async (req) => {
 			});
 		}
 		
-		// Validate message
-		if (message && (typeof message !== "string")) {
-			throw new BAD_REQUEST({
-				message: "Message field is invalid",
-				request: req,
-			});
-		}
-		
-		// Validate status_id
 		if (status_id && (isNaN(status_id) || status_id <= 0)) {
 			throw new BAD_REQUEST({
 				message: "Status ID must be a positive integer",
@@ -295,19 +245,10 @@ const updateContact = async (req) => {
 		}
 		
 		const updateData = {};
-		if (service_category_id) updateData.service_category_id = service_category_id;
-		if (name) updateData.name = name;
-		if (phone) updateData.phone = phone;
-		if (email) updateData.email = email;
-		if (address) updateData.address = address;
 		if (notes !== undefined) updateData.notes = notes;
-		if (message !== undefined) updateData.message = message;
 		if (status_id) updateData.status_id = status_id;
-		updateData.author_id = userId;
 		
-		await contact.update(updateData).then(updatedBanner => {
-			return updatedBanner;
-		}).catch(error => {
+		await contact.update(updateData).catch(error => {
 			throw new BAD_REQUEST({
 					message: `Failed to update banner with ID ${id}: ${error.message}`,
 					request: req,
@@ -341,8 +282,303 @@ const updateContact = async (req) => {
 	}
 };
 
+const updateAuthor = async (req) => {
+	try {
+		if (!req || typeof req !== "object") {
+			throw new BAD_REQUEST({
+					message: "Invalid request object",
+					request: req,
+				}
+			);
+		}
+		if (!req.keyStore || !req.keyStore.id) {
+			throw new UNAUTHORIZED({
+				message: "Thông tin xác thực không hợp lệ - Invalid authentication data",
+				suggestion: "Vui lòng kiểm tra token và client_id",
+			});
+		}
+		
+		const userId = req.keyStore.id;
+		if (isNaN(userId) || userId <= 0) {
+			throw new BAD_REQUEST({
+				message: "User ID must be a positive integer",
+				request: req,
+			});
+		}
+		
+		const {id} = req.body;
+		
+		if (!id || isNaN(id) || id <= 0) {
+			throw new BAD_REQUEST({
+				message: "Contact ID is missing or invalid",
+				request: req,
+			});
+		}
+		
+		const contact = await db.ContactSubmission.findByPk(id, {
+			attributes: [
+				"id",
+				"service_category_id",
+				"author_id",
+				"name",
+				"phone",
+				"email",
+				"address",
+				"notes",
+				"message",
+				"status_id",
+				"created_at",
+			],
+		});
+		
+		if (!contact) {
+			throw new NOT_FOUND({
+				message: `Contact with ID ${id} not found`,
+				request: req,
+			});
+		}
+		
+		if (contact && contact.author_id && contact.author_id !== userId) {
+			throw new BAD_REQUEST({
+					message: `Contact with ID ${id} already has an author assigned`,
+					request: req,
+				}
+			);
+		}
+		
+		const updateData = {};
+		if (userId) updateData.author_id = userId;
+		
+		await contact.update(updateData).catch(error => {
+			throw new BAD_REQUEST({
+					message: `Failed to update contact with ID ${id}: ${error.message}`,
+					request: req,
+				}
+			);
+		});
+		
+		return {
+			contact: contact,
+		};
+	} catch (error) {
+		if (error instanceof BAD_REQUEST || error instanceof NOT_FOUND || error instanceof UNAUTHORIZED) {
+			throw error;
+		}
+		if (error.name === "SequelizeForeignKeyConstraintError" || error.parent?.code === "ER_NO_REFERENCED_ROW_2") {
+			let column = "unknown";
+			if (error.parent?.sqlMessage) {
+				const match = error.parent.sqlMessage.match(/FOREIGN KEY \(`(.+?)`\) REFERENCES/);
+				if (match) column = match[1];
+			}
+			throw new BAD_REQUEST({
+				message: `Foreign key constraint error on column ${column}`,
+				request: req,
+			});
+		}
+		throw new BAD_REQUEST({
+			message: `Failed to update contact: ${error.message}`,
+			request: req,
+		});
+	}
+}
+
+const updateStatus = async (req) => {
+	try {
+		if (!req || typeof req !== "object") {
+			throw new BAD_REQUEST({
+					message: "Invalid request object",
+					request: req,
+				}
+			);
+		}
+		if (!req.keyStore || !req.keyStore.id) {
+			throw new UNAUTHORIZED({
+				message: "Thông tin xác thực không hợp lệ - Invalid authentication data",
+				suggestion: "Vui lòng kiểm tra token và client_id",
+			});
+		}
+		
+		const userId = req.keyStore.id;
+		if (isNaN(userId) || userId <= 0) {
+			throw new BAD_REQUEST({
+				message: "User ID must be a positive integer",
+				request: req,
+			});
+		}
+		
+		const {status_id, id} = req.body;
+		
+		if (!id || isNaN(id) || id <= 0) {
+			throw new BAD_REQUEST({
+					message: "Contact ID is missing or invalid",
+					request: req,
+				}
+			);
+		}
+		
+		if (!status_id || isNaN(status_id) || status_id <= 0) {
+			throw new BAD_REQUEST({
+				message: "Contact ID is missing or invalid",
+				request: req,
+			});
+		}
+		
+		const contact = await db.ContactSubmission.findByPk(id, {
+			attributes: [
+				"id",
+				"service_category_id",
+				"author_id",
+				"name",
+				"phone",
+				"email",
+				"address",
+				"notes",
+				"message",
+				"status_id",
+				"created_at",
+			],
+		});
+		
+		if (!contact) {
+			throw new NOT_FOUND({
+				message: `Contact status with ID ${id} not found`,
+				request: req,
+			});
+		}
+		
+		if (contact && contact.author_id && contact.author_id !== userId) {
+			throw new BAD_REQUEST({
+					message: `Contact status with ID ${id} not assigned to you or already has an author assigned`,
+					request: req,
+				}
+			);
+		}
+		
+		const updateData = {};
+		if (status_id) updateData.status_id = status_id;
+		
+		await contact.update(updateData).catch(error => {
+			throw new BAD_REQUEST({
+					message: `Failed to update status with ID ${id}: ${error.message}`,
+					request: req,
+				}
+			);
+		});
+		
+		return {
+			contact: contact,
+		};
+	} catch (error) {
+		if (error instanceof BAD_REQUEST || error instanceof NOT_FOUND || error instanceof UNAUTHORIZED) {
+			throw error;
+		}
+		if (error.name === "SequelizeForeignKeyConstraintError" || error.parent?.code === "ER_NO_REFERENCED_ROW_2") {
+			let column = "unknown";
+			if (error.parent?.sqlMessage) {
+				const match = error.parent.sqlMessage.match(/FOREIGN KEY \(`(.+?)`\) REFERENCES/);
+				if (match) column = match[1];
+			}
+			throw new BAD_REQUEST({
+				message: `Foreign key constraint error on column ${column}`,
+				request: req,
+			});
+		}
+		throw new BAD_REQUEST({
+			message: `Failed to update contact: ${error.message}`,
+			request: req,
+		});
+	}
+}
+
+const deleteContact = async (req) => {
+	try {
+		
+		if (!req || typeof req !== "object") {
+			throw new BAD_REQUEST({
+				message: "Invalid request object",
+				request: req,
+			});
+		}
+		
+		if (!req.keyStore || !req.keyStore.id) {
+			throw new UNAUTHORIZED({
+				message: "Invalid authentication data",
+				suggestion: "Please check token and client_id",
+			});
+		}
+		
+		const userId = req.keyStore.id;
+		if (isNaN(userId) || userId <= 0) {
+			throw new BAD_REQUEST({
+				message: "Author ID must be a positive integer",
+				request: req,
+			});
+		}
+		
+		const {id} = req.params;
+		
+		if (!id || isNaN(id) || id <= 0) {
+			throw new BAD_REQUEST({
+				message: "Contact ID is missing or invalid",
+				request: req,
+			});
+		}
+		
+		const contact = await db.ContactSubmission.findByPk(id, {
+			attributes: [
+				"id",
+				"service_category_id",
+				"author_id",
+				"name",
+				"phone",
+				"email",
+				"address",
+				"notes",
+				"message",
+				"status_id",
+				"created_at",
+			],
+		});
+		
+		if (!contact) {
+			throw new BAD_REQUEST({
+				message: `Contact with ID ${id} not found`,
+				request: req,
+			});
+		}
+		
+		if (contact.author_id && contact.author_id !== userId) {
+			throw new BAD_REQUEST({
+					message: `Contact with ID ${id} is not assigned to you or already has an author assigned`,
+					request: req,
+				}
+			);
+		}
+		
+		await contact.destroy().catch(error => {
+			throw new BAD_REQUEST({
+				message: `Failed to delete contact with ID ${id}: ${error.message}`,
+				request: req,
+			});
+		});
+		
+		return {
+			contact: contact
+		};
+		
+	} catch (error) {
+		if (error instanceof BAD_REQUEST || error instanceof UNAUTHORIZED || error instanceof NOT_FOUND) {
+			throw error;
+		}
+		throw error;
+	}
+}
+
 export {
 	submitContactService,
 	getAllContacts,
-	updateContact
+	updateContact,
+	updateAuthor,
+	updateStatus,
+	deleteContact
 };

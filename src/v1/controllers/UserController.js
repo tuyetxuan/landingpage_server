@@ -1,7 +1,7 @@
 "use strict";
 
 import __RESPONSE__ from "#core/index.js";
-import {changePassword, createUser, getAllUsers, getUserById, logout, resetPassword, updateUser, updateUserRole, updateUserStatus} from "#services/UserService.js";
+import {changePassword, createUser, getAllUsers, getUserById, logout, report, resetPassword, updateUser, updateUserRole, updateUserStatus} from "#services/UserService.js";
 import {SUCCESS_RESPONSE} from "#core/successResponse.js";
 
 const __user__ = {
@@ -97,6 +97,17 @@ const __user__ = {
 	},
 	changePassword: async (req, res, next) => {
 		const __ = await changePassword(req);
+		if (__ instanceof SUCCESS_RESPONSE)
+			return __.send(res);
+		else
+			new __RESPONSE__.UPDATED({
+				metadata: __,
+				request: req,
+				lang: 'vi'
+			}).send(res);
+	},
+	report: async (req, res, next) => {
+		const __ = await report(req);
 		if (__ instanceof SUCCESS_RESPONSE)
 			return __.send(res);
 		else
