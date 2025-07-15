@@ -415,11 +415,12 @@ const createArticle = async (req) => {
 		
 		let thumbnailUrl = null;
 		if (req.file) {
-			const isImage = req.file.mimetype.startsWith("image/");
+			const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+			const isImage = allowedTypes.includes(req.file.mimetype);
 			const isLt5M = req.file.size / 1024 / 1024 < 5;
 			if (!isImage || !isLt5M) {
 				throw new BAD_REQUEST({
-					message: "Loại tệp hoặc kích thước không hợp lệ. Chỉ chấp nhận hình ảnh có kích thước dưới 5MB.",
+					message: 'Loại tệp hoặc kích thước không hợp lệ. Chỉ chấp nhận hình ảnh JPG, PNG, GIF, JPEG dưới 5MB.',
 					request: req,
 				});
 			}
@@ -617,11 +618,12 @@ const updateArticle = async (req) => {
 		// Handle thumbnail upload
 		let thumbnailUrl = article.thumbnail_url;
 		if (req.file) {
-			const isImage = req.file.mimetype.startsWith("image/");
+			const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+			const isImage = allowedTypes.includes(req.file.mimetype);
 			const isLt5M = req.file.size / 1024 / 1024 < 5;
 			if (!isImage || !isLt5M) {
 				throw new BAD_REQUEST({
-					message: "Loại tệp hoặc kích thước không hợp lệ. Chỉ chấp nhận hình ảnh có kích thước dưới 5MB.",
+					message: 'Loại tệp hoặc kích thước không hợp lệ. Chỉ chấp nhận hình ảnh JPG, PNG, GIF, JPEG dưới 5MB.',
 					request: req,
 				});
 			}
